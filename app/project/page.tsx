@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/i18n";
-import { convertCloudinaryUrlToWebFormat, isPdfUrl } from "@/lib/cloudinary";
+import { convertCloudinaryUrlToWebFormat, getPdfPreviewUrl, isPdfUrl } from "@/lib/cloudinary";
 import { formatYearSeason, getSeasonLang } from "@/lib/dateDisplay";
 
 interface Project {
@@ -51,12 +51,14 @@ export default function ProjectListPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((proj) => {
             const isPdf = isPdfUrl(proj.coverImage);
+            const pdfPreviewUrl = isPdf ? getPdfPreviewUrl(proj.coverImage) : null;
             const isCloudinary = proj.coverImage?.includes("cloudinary");
             const src = proj.coverImage && !isPdf
               ? isCloudinary
                 ? convertCloudinaryUrlToWebFormat(proj.coverImage)
                 : proj.coverImage
-              : "/placeholder.svg";
+              : pdfPreviewUrl || "/placeholder.svg";
+            const showPdfIcon = isPdf && !pdfPreviewUrl;
             return (
               <Link
                 key={proj.id}
@@ -64,7 +66,7 @@ export default function ProjectListPage() {
                 className="group block rounded-lg overflow-hidden border border-gray-200 hover:border-gray-400 hover:shadow-lg transition"
               >
                 <div className="relative aspect-[4/3] bg-gray-100">
-                  {isPdf ? (
+                  {showPdfIcon ? (
                     <div className="absolute inset-0 flex items-center justify-center text-4xl text-gray-400">📄</div>
                   ) : (
                   <Image
@@ -73,7 +75,7 @@ export default function ProjectListPage() {
                     fill
                     className="object-cover group-hover:scale-105 transition duration-300"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    unoptimized={isCloudinary}
+                    unoptimized={isCloudinary || !!pdfPreviewUrl}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/placeholder.svg";
                     }}

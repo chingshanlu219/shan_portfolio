@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/i18n";
-import { convertCloudinaryUrlToWebFormat, isPdfUrl } from "@/lib/cloudinary";
+import { convertCloudinaryUrlToWebFormat, getPdfPreviewUrl, isPdfUrl } from "@/lib/cloudinary";
 import { formatYearSeason, getSeasonLang } from "@/lib/dateDisplay";
 
 interface HomepagePicture {
@@ -59,20 +59,24 @@ export default function HomepagePage() {
   return (
     <div className="min-h-screen">
       {pictures.length > 0 && (
-        <div className="overflow-hidden py-8">
-          <div className="flex animate-marquee w-max">
+        <div className="h-screen overflow-hidden">
+          <div className="flex animate-marquee w-max h-full items-stretch">
             {[...pictures, ...pictures].map((pic) => {
               const isPdf = isPdfUrl(pic.imageUrl);
+              const pdfPreviewUrl = isPdf ? getPdfPreviewUrl(pic.imageUrl) : null;
               const isCloudinary = pic.imageUrl?.includes("cloudinary");
-              const src = isCloudinary
-                ? convertCloudinaryUrlToWebFormat(pic.imageUrl)
-                : pic.imageUrl;
+              const src = !isPdf
+                ? isCloudinary
+                  ? convertCloudinaryUrlToWebFormat(pic.imageUrl)
+                  : pic.imageUrl
+                : pdfPreviewUrl;
+              const showPdfIcon = isPdf && !pdfPreviewUrl;
               return (
                 <div
                   key={`${pic.id}-${pic.order}`}
-                  className="flex-shrink-0 w-64 h-48 mx-2 relative rounded-lg overflow-hidden bg-gray-100"
+                  className="flex-shrink-0 h-full aspect-[4/3] mx-2 relative rounded-lg overflow-hidden bg-gray-100"
                 >
-                  {isPdf ? (
+                  {showPdfIcon ? (
                     <a
                       href={pic.imageUrl}
                       target="_blank"
@@ -83,12 +87,21 @@ export default function HomepagePage() {
                     </a>
                   ) : (
                     <Image
-                      src={src}
+                      src={src || "/placeholder.svg"}
                       alt=""
                       fill
                       className="object-cover"
                       sizes="256px"
-                      unoptimized={isCloudinary}
+                      unoptimized={isCloudinary || !!pdfPreviewUrl}
+                    />
+                  )}
+                  {isPdf && pdfPreviewUrl && (
+                    <a
+                      href={pic.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute inset-0"
+                      onClick={(e) => e.stopPropagation()}
                     />
                   )}
                 </div>
@@ -104,12 +117,15 @@ export default function HomepagePage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {previewProjects.map((proj) => {
+            const isPdf = isPdfUrl(proj.coverImage);
+            const pdfPreviewUrl = isPdf ? getPdfPreviewUrl(proj.coverImage) : null;
             const isCloudinary = proj.coverImage?.includes("cloudinary");
-            const src = proj.coverImage
+            const src = proj.coverImage && !isPdf
               ? isCloudinary
                 ? convertCloudinaryUrlToWebFormat(proj.coverImage)
                 : proj.coverImage
-              : "/placeholder.svg";
+              : pdfPreviewUrl || "/placeholder.svg";
+            const showPdfIcon = isPdf && !pdfPreviewUrl;
             return (
               <Link
                 key={proj.id}
@@ -117,17 +133,21 @@ export default function HomepagePage() {
                 className="group block rounded-lg overflow-hidden border border-gray-200 hover:border-gray-400 transition"
               >
                 <div className="relative aspect-[4/3] bg-gray-100">
-                  <Image
-                    src={src}
-                    alt={getLocalized(proj.title)}
-                    fill
-                    className="object-cover group-hover:scale-105 transition duration-300"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    unoptimized={isCloudinary}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                    }}
-                  />
+                  {showPdfIcon ? (
+                    <div className="absolute inset-0 flex items-center justify-center text-4xl text-gray-400">📄</div>
+                  ) : (
+                    <Image
+                      src={src}
+                      alt={getLocalized(proj.title)}
+                      fill
+                      className="object-cover group-hover:scale-105 transition duration-300"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      unoptimized={isCloudinary || !!pdfPreviewUrl}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 group-hover:text-gray-600">

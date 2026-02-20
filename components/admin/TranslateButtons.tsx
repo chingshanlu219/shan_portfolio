@@ -75,6 +75,9 @@ export function TranslateButtons({
   return (
     <div className="mb-6 p-4 bg-gray-50 rounded-lg">
       <h3 className="font-semibold text-gray-900 mb-2">AI 翻譯（MyMemory 免費）</h3>
+      <p className="text-xs text-gray-500 mb-2">
+        會翻譯標題、描述、內容到所有空白語言。
+      </p>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2">
           <span className="text-sm text-gray-600">來源語言：</span>

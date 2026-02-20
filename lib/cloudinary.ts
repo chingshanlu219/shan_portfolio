@@ -3,6 +3,30 @@ export function isPdfUrl(url: string | null | undefined): boolean {
   return url.toLowerCase().endsWith(".pdf") || url.includes("/raw/");
 }
 
+/**
+ * Get first-page preview image URL for Cloudinary PDFs (uploaded as image type).
+ * Returns null for raw PDFs (no preview available).
+ */
+export function getPdfPreviewUrl(
+  url: string | null | undefined,
+  options?: { width?: number; height?: number; crop?: string }
+): string | null {
+  if (!url || !url.includes("cloudinary.com")) return null;
+  if (url.includes("/raw/")) return null;
+  if (!url.toLowerCase().includes(".pdf")) return null;
+  const uploadIdx = url.indexOf("/upload/");
+  if (uploadIdx === -1) return null;
+  const before = url.substring(0, uploadIdx + 8);
+  const after = url.substring(uploadIdx + 8);
+  const transforms: string[] = [];
+  if (options?.width) transforms.push(`w_${options.width}`);
+  if (options?.height) transforms.push(`h_${options.height}`);
+  if (options?.crop) transforms.push(`c_${options.crop}`);
+  if (transforms.length === 0) transforms.push("w_800", "c_fill");
+  const newPath = after.replace(/\.pdf$/i, ".jpg");
+  return `${before}${transforms.join(",")}/${newPath}`;
+}
+
 export function getCloudinaryImageUrl(
   publicId: string,
   options?: {

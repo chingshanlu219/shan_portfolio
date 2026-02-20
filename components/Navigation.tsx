@@ -27,7 +27,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="border-b bg-white sticky top-0 z-50">
+    <nav className="bg-transparent sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
         <Link href="/homepage" className="font-semibold text-gray-900">
           {t.nav.homepage}

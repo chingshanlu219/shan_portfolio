@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const resourceType = file.type === "application/pdf" ? "raw" : "auto";
+    const resourceType = file.type === "application/pdf" ? "image" : "auto";
 
     const result = await new Promise<{ secure_url: string; public_id: string }>(
       (resolve, reject) => {

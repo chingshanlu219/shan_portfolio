@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import Image from "next/image";
-import { convertCloudinaryUrlToWebFormat } from "@/lib/cloudinary";
+import { convertCloudinaryUrlToWebFormat, getPdfPreviewUrl, isPdfUrl } from "@/lib/cloudinary";
 
 interface HomepagePicture {
   id: string;
@@ -82,22 +82,41 @@ export default function AdminHomepagePicturesPage() {
           </h2>
           <div className="flex flex-wrap gap-4">
             {pictures.map((pic) => {
+              const isPdf = isPdfUrl(pic.imageUrl);
+              const pdfPreviewUrl = isPdf ? getPdfPreviewUrl(pic.imageUrl, { width: 400 }) : null;
               const isCloudinary = pic.imageUrl?.includes("cloudinary");
-              const src = isCloudinary
-                ? convertCloudinaryUrlToWebFormat(pic.imageUrl)
-                : pic.imageUrl;
+              const src = isPdf && pdfPreviewUrl
+                ? pdfPreviewUrl
+                : !isPdf && pic.imageUrl
+                  ? isCloudinary
+                    ? convertCloudinaryUrlToWebFormat(pic.imageUrl)
+                    : pic.imageUrl
+                  : "/placeholder.svg";
+              const showPdfIcon = isPdf && !pdfPreviewUrl;
               return (
                 <div
                   key={pic.id}
-                  className="relative w-48 h-36 rounded overflow-hidden border group"
+                  className="relative w-48 h-36 rounded overflow-hidden border group bg-gray-100"
                 >
+                  {showPdfIcon ? (
+                    <a
+                      href={pic.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-gray-500 hover:bg-gray-200"
+                    >
+                      <span className="text-3xl">📄</span>
+                      <span className="text-xs">PDF</span>
+                    </a>
+                  ) : (
                   <Image
                     src={src}
                     alt=""
                     fill
                     className="object-cover"
-                    unoptimized={isCloudinary}
+                    unoptimized={isCloudinary || !!pdfPreviewUrl}
                   />
+                  )}
                   <button
                     onClick={() => handleDelete(pic.id)}
                     className="absolute top-2 right-2 px-2 py-1 bg-red-600 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition"
